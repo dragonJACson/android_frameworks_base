@@ -282,6 +282,7 @@ public class NetworkControllerImpl extends BroadcastReceiver
         filter.addAction(ConnectivityManager.INET_CONDITION_ACTION);
         filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
         filter.addAction(CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED);
+        filter.addAction(Intent.ACTION_LOCALE_CHANGED);
         mContext.registerReceiver(this, filter, null, mReceiverHandler);
         mListening = true;
 
@@ -478,6 +479,12 @@ public class NetworkControllerImpl extends BroadcastReceiver
             case CarrierConfigManager.ACTION_CARRIER_CONFIG_CHANGED:
                 mConfig = Config.readConfig(mContext);
                 mReceiverHandler.post(this::handleConfigurationChanged);
+                break;
+            case Intent.ACTION_LOCALE_CHANGED:
+                for (int i = 0; i < mMobileSignalControllers.size(); i++) {
+                    MobileSignalController controller = mMobileSignalControllers.valueAt(i);
+                    controller.handleBroadcast(intent);
+                }
                 break;
             default:
                 int subId = intent.getIntExtra(PhoneConstants.SUBSCRIPTION_KEY,

@@ -154,6 +154,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener,
     private static final int MSG_FINGERPRINT_AUTHENTICATION_CONTINUE = 336;
     private static final int MSG_DEVICE_POLICY_MANAGER_STATE_CHANGED = 337;
     private static final int MSG_TELEPHONY_CAPABLE = 338;
+    private static final int MSG_LOCALE_CHANGED = 500;
 
     /** Fingerprint state: Not listening to fingerprint. */
     private static final int FINGERPRINT_STATE_STOPPED = 0;
@@ -351,6 +352,9 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener,
                     break;
                 case MSG_TELEPHONY_CAPABLE:
                     updateTelephonyCapable((boolean)msg.obj);
+                    break;
+                case MSG_LOCALE_CHANGED:
+                    handleLocaleChanged();
                     break;
                 default:
                     super.handleMessage(msg);
@@ -852,6 +856,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener,
             } else if (DevicePolicyManager.ACTION_DEVICE_POLICY_MANAGER_STATE_CHANGED.equals(
                     action)) {
                 mHandler.sendEmptyMessage(MSG_DEVICE_POLICY_MANAGER_STATE_CHANGED);
+            } else if (Intent.ACTION_LOCALE_CHANGED.equals(action)) {
+                mHandler.sendEmptyMessage(MSG_LOCALE_CHANGED);
             }
         }
     };
@@ -1211,6 +1217,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener,
         filter.addAction(Intent.ACTION_BATTERY_CHANGED);
         filter.addAction(Intent.ACTION_TIMEZONE_CHANGED);
         filter.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
+        filter.addAction(Intent.ACTION_LOCALE_CHANGED);
         filter.addAction(TelephonyIntents.ACTION_SIM_STATE_CHANGED);
         filter.addAction(TelephonyIntents.ACTION_SERVICE_STATE_CHANGED);
         filter.addAction(TelephonyManager.ACTION_PHONE_STATE_CHANGED);
@@ -1831,6 +1838,18 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener,
 
     public void sendKeyguardReset() {
         mHandler.obtainMessage(MSG_KEYGUARD_RESET).sendToTarget();
+    }
+
+    /**
+     * Handle {@link #MSG_LOCALE_CHANGED}
+     */
+    private void handleLocaleChanged() {
+        for (int j = 0; j < mCallbacks.size(); j++) {
+            KeyguardUpdateMonitorCallback cb = mCallbacks.get(j).get();
+            if (cb != null) {
+                cb.onRefreshCarrierInfo();
+            }
+        }
     }
 
     /**

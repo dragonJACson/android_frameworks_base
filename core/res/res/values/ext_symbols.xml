@@ -53,4 +53,8 @@
 
     <!-- Whether to allow process with media UID to access CameraServiceProxy -->
     <java-symbol type="bool" name="config_allowMediaUidForCameraServiceProxy" />
+
+    <!-- Carrier names -->
+    <java-symbol type="array" name="origin_carrier_names" />
+    <java-symbol type="array" name="locale_carrier_names" />
 </resources>
