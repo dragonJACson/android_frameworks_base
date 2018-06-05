@@ -57,4 +57,9 @@
     <!-- Carrier names -->
     <java-symbol type="array" name="origin_carrier_names" />
     <java-symbol type="array" name="locale_carrier_names" />
+
+    <!-- App error dialog -->
+    <java-symbol type="id" name="aerr_copy" />
+    <java-symbol type="string" name="url_copy_success" />
+    <java-symbol type="string" name="url_copy_failed" />
 </resources>
