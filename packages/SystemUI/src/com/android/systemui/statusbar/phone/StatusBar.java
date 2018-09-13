@@ -242,6 +242,7 @@ import com.android.systemui.statusbar.policy.NetworkController;
 import com.android.systemui.statusbar.policy.OnHeadsUpChangedListener;
 import com.android.systemui.statusbar.policy.PreviewInflater;
 import com.android.systemui.statusbar.policy.RemoteInputQuickSettingsDisabler;
+import com.android.systemui.statusbar.policy.TelephonyIcons;
 import com.android.systemui.statusbar.policy.UserInfoController;
 import com.android.systemui.statusbar.policy.UserInfoControllerImpl;
 import com.android.systemui.statusbar.policy.UserSwitcherController;
@@ -293,6 +294,8 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             "mksystem:" + MKSettings.System.USE_BOTTOM_GESTURE_NAVIGATION;
     public static final String BERRY_GLOBAL_STYLE =
             "mksystem:" + MKSettings.System.BERRY_GLOBAL_STYLE;
+    public static final String OMNI_USE_OLD_MOBILETYPE =
+            "mksystem:" + MKSettings.System.OMNI_USE_OLD_MOBILETYPE;
 
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
@@ -724,6 +727,7 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
         tunerService.addTunable(this, FORCE_SHOW_NAVBAR);
         tunerService.addTunable(this, USE_BOTTOM_GESTURE_NAVIGATION);
         tunerService.addTunable(this, BERRY_GLOBAL_STYLE);
+        tunerService.addTunable(this, OMNI_USE_OLD_MOBILETYPE);
 
         mDisplayManager = mContext.getSystemService(DisplayManager.class);
 
@@ -5982,6 +5986,8 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             }
         } else if (BERRY_GLOBAL_STYLE.equals(key)) {
             updateTheme();
+        } else if (OMNI_USE_OLD_MOBILETYPE.equals(key)) {
+            TelephonyIcons.updateIcons(isOldMobileTypeEnabled());
         }
     }
     // End Extra BaseStatusBarMethods.
@@ -6030,6 +6036,12 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
     private boolean isForceShowNavbarEnabled() {
         return MKSettings.System.getIntForUser(mContext.getContentResolver(),
                 MKSettings.System.FORCE_SHOW_NAVBAR, 0,
+                UserHandle.USER_CURRENT) == 1;
+    }
+
+    private boolean isOldMobileTypeEnabled() {
+        return MKSettings.System.getIntForUser(mContext.getContentResolver(),
+                MKSettings.System.OMNI_USE_OLD_MOBILETYPE, 0,
                 UserHandle.USER_CURRENT) == 1;
     }
 }
