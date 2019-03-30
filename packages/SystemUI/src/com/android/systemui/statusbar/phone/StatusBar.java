@@ -284,6 +284,8 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
 
     public static final String SCREEN_BRIGHTNESS_MODE =
             "system:" + Settings.System.SCREEN_BRIGHTNESS_MODE;
+    public static final String OMNI_USE_OLD_MOBILETYPE =
+            "mksystem:" + MKSettings.System.OMNI_USE_OLD_MOBILETYPE;
     public static final String STATUS_BAR_BRIGHTNESS_CONTROL =
             "mksystem:" + MKSettings.System.STATUS_BAR_BRIGHTNESS_CONTROL;
     private static final String LOCKSCREEN_MEDIA_METADATA =
@@ -294,8 +296,6 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
             "mksystem:" + MKSettings.System.USE_BOTTOM_GESTURE_NAVIGATION;
     public static final String BERRY_GLOBAL_STYLE =
             "mksystem:" + MKSettings.System.BERRY_GLOBAL_STYLE;
-    public static final String OMNI_USE_OLD_MOBILETYPE =
-            "mksystem:" + MKSettings.System.OMNI_USE_OLD_MOBILETYPE;
 
     private static final String BANNER_ACTION_CANCEL =
             "com.android.systemui.statusbar.banner_action_cancel";
@@ -363,6 +363,8 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
 
     /** Whether to switch the device into night mode in battery saver. (Disabled.) */
     private static final boolean NIGHT_MODE_IN_BATTERY_SAVER = false;
+
+    public static boolean USE_OLD_MOBILETYPE = true;
 
     /**
      * Never let the alpha become zero for surfaces that draw with SRC - otherwise the RenderNode
@@ -5987,7 +5989,10 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
         } else if (BERRY_GLOBAL_STYLE.equals(key)) {
             updateTheme();
         } else if (OMNI_USE_OLD_MOBILETYPE.equals(key)) {
-            TelephonyIcons.updateIcons(isOldMobileTypeEnabled());
+            USE_OLD_MOBILETYPE = MKSettings.System.getIntForUser(mContext.getContentResolver(),
+	            MKSettings.System.OMNI_USE_OLD_MOBILETYPE, 0,
+        	    UserHandle.USER_CURRENT) != 0;
+            TelephonyIcons.updateIcons(USE_OLD_MOBILETYPE);
         }
     }
     // End Extra BaseStatusBarMethods.
@@ -6036,12 +6041,6 @@ public class StatusBar extends SystemUI implements DemoMode, TunerService.Tunabl
     private boolean isForceShowNavbarEnabled() {
         return MKSettings.System.getIntForUser(mContext.getContentResolver(),
                 MKSettings.System.FORCE_SHOW_NAVBAR, 0,
-                UserHandle.USER_CURRENT) == 1;
-    }
-
-    private boolean isOldMobileTypeEnabled() {
-        return MKSettings.System.getIntForUser(mContext.getContentResolver(),
-                MKSettings.System.OMNI_USE_OLD_MOBILETYPE, 0,
                 UserHandle.USER_CURRENT) == 1;
     }
 }
