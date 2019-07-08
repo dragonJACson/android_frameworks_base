@@ -4147,11 +4147,6 @@ public final class Settings {
           */
         public static final String VOLUME_KEY_CURSOR_CONTROL = "volume_key_cursor_control";
 
-        /* Whether to display VoLTE icon when VoLTE present
-         * @hide
-         */
-        public static final String SHOW_VOLTE_ICON = "show_volte_icon";
-
         /**
          * Heads up timeout configuration
          * @hide
