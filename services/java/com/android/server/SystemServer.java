@@ -1213,7 +1213,6 @@ public final class SystemServer {
                 ServiceManager.addService(Context.CONNECTIVITY_SERVICE, connectivity,
                             /* allowIsolated= */ false,
                     DUMP_FLAG_PRIORITY_HIGH | DUMP_FLAG_PRIORITY_NORMAL);
-                networkStats.bindConnectivityManager(connectivity);
                 networkPolicy.bindConnectivityManager(connectivity);
             } catch (Throwable e) {
                 reportWtf("starting Connectivity Service", e);
@@ -1856,6 +1855,15 @@ public final class SystemServer {
                 reportWtf("starting System UI", e);
             }
             traceEnd();
+
+            traceBeginAndSlog("StartAegis");
+            try {
+                startAegis(context);
+            } catch (Throwable e) {
+                reportWtf("starting Aegis", e);
+            }
+            traceEnd();
+
             traceBeginAndSlog("MakeNetworkManagementServiceReady");
             try {
                 if (networkManagementF != null) networkManagementF.systemReady();
@@ -1999,6 +2007,13 @@ public final class SystemServer {
         //Slog.d(TAG, "Starting service: " + intent);
         context.startServiceAsUser(intent, UserHandle.SYSTEM);
         windowManager.onSystemUiStarted();
+    }
+
+    static final void startAegis(Context context) {
+        Intent intent = new Intent();
+        intent.setComponent(new ComponentName("com.mokee.aegis",
+                "com.mokee.aegis.AegisService"));
+        context.startServiceAsUser(intent, UserHandle.SYSTEM);
     }
 
     private static void traceBeginAndSlog(String name) {
