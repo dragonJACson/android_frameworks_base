@@ -26,24 +26,32 @@ import android.util.Slog;
 
 import com.android.internal.logging.MetricsLogger;
 import com.android.internal.logging.nano.MetricsProto.MetricsEvent;
+import com.android.internal.statusbar.IStatusBarService;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
+
+import vendor.mokee.biometrics.fingerprint.inscreen.V1_0.IFingerprintInscreen;
 
 /**
  * A class to keep track of the enrollment state for a given client.
  */
 public abstract class EnrollClient extends ClientMonitor {
-    private final FacolaView mFacola;
     private static final long MS_PER_SEC = 1000;
     private static final int ENROLLMENT_TIMEOUT_MS = 60 * 1000; // 1 minute
     private byte[] mCryptoToken;
+    private boolean mDisplayFODView;
+    private IStatusBarService mStatusBarService;
+    private IFingerprintInscreen mExtDaemon = null;
 
     public EnrollClient(Context context, long halDeviceId, IBinder token,
             IFingerprintServiceReceiver receiver, int userId, int groupId, byte [] cryptoToken,
-            boolean restricted, String owner) {
+            boolean restricted, String owner, IStatusBarService statusBarService) {
         super(context, halDeviceId, token, receiver, userId, groupId, restricted, owner);
         mCryptoToken = Arrays.copyOf(cryptoToken, cryptoToken.length);
-        mFacola = new FacolaView(context);
+        mDisplayFODView = context.getResources().getBoolean(
+                com.android.internal.R.bool.config_needCustomFODView);
+        mStatusBarService = statusBarService;
     }
 
     @Override
@@ -71,7 +79,20 @@ public abstract class EnrollClient extends ClientMonitor {
         MetricsLogger.action(getContext(), MetricsEvent.ACTION_FINGERPRINT_ENROLL);
         try {
             receiver.onEnrollResult(getHalDeviceId(), fpId, groupId, remaining);
-            if(remaining == 0) mFacola.hide();
+            if (remaining == 0 && mDisplayFODView) {
+                try {
+                    mExtDaemon = IFingerprintInscreen.getService();
+                    mExtDaemon.onFinishEnroll();
+                } catch (NoSuchElementException | RemoteException e) {
+                    // do nothing
+                }
+
+                try {
+                    mStatusBarService.handleInDisplayFingerprintView(false, true);
+                } catch (RemoteException ex) {
+                    // do nothing
+                }
+            }
             return remaining == 0;
         } catch (RemoteException e) {
             Slog.w(TAG, "Failed to notify EnrollResult:", e);
@@ -86,9 +107,21 @@ public abstract class EnrollClient extends ClientMonitor {
             Slog.w(TAG, "enroll: no fingerprint HAL!");
             return ERROR_ESRCH;
         }
-        Slog.w(TAG, "Starting enroll");
 
-        mFacola.show();
+        if (mDisplayFODView) {
+            try {
+                mExtDaemon = IFingerprintInscreen.getService();
+                mExtDaemon.onStartEnroll();
+            } catch (NoSuchElementException | RemoteException e) {
+                // do nothing
+            }
+
+            try {
+                mStatusBarService.handleInDisplayFingerprintView(true, true);
+            } catch (RemoteException ex) {
+                // do nothing
+            }
+        }
 
         final int timeout = (int) (ENROLLMENT_TIMEOUT_MS / MS_PER_SEC);
         try {
@@ -111,7 +144,15 @@ public abstract class EnrollClient extends ClientMonitor {
             Slog.w(TAG, "stopEnroll: already cancelled!");
             return 0;
         }
-        mFacola.hide();
+
+        if (mDisplayFODView) {
+            try {
+                mStatusBarService.handleInDisplayFingerprintView(false, true);
+            } catch (RemoteException e) {
+                // do nothing
+            }
+        }
+
         IBiometricsFingerprint daemon = getFingerprintDaemon();
         if (daemon == null) {
             Slog.w(TAG, "stopEnrollment: no fingerprint HAL!");
