@@ -50,7 +50,6 @@ import android.os.RemoteCallback;
 import android.os.SystemProperties;
 import android.os.TransactionTooLargeException;
 import android.provider.Settings;
-import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 
@@ -450,14 +449,14 @@ public final class ActiveServices {
         boolean forceSilentAbort = false;
 
         try {
-            final List<ActivityManager.RunningTaskInfo> RunningTaskInfos = mAm.getTasks(1);
-            if (mAm.mIAegisInterface != null && RunningTaskInfos.size() != 0) {
-                final String topActivityPackage = RunningTaskInfos.get(0).topActivity.getPackageName();
+            if (mAm.mIAegisInterface != null) {
                 if (mAm.mIAegisInterface.isChainLaunchDisabled(callingPackage, r.packageName)) {
                     return new ComponentName("?", "app is chain launch!");
-                } else if (mAm.mIAegisInterface.isAutomaticallyLaunchDisabled(r.packageName)
-                        && !TextUtils.equals(r.packageName, topActivityPackage)) {
-                    return new ComponentName("?", "app is automatically launch!");
+                } else if (mAm.mIAegisInterface.isAutomaticallyLaunchDisabled(r.packageName)) {
+                    final List<String> runningPackages = getRunningPackages(mAm.getTasks(2));
+                    if (!runningPackages.contains(r.packageName)) {
+                        return new ComponentName("?", "app is automatically launch!");
+                    }
                 }
             }
         } catch (RemoteException e) {
@@ -4262,6 +4261,16 @@ public final class ActiveServices {
             dumpService("", fd, pw, services.get(i), args, dumpAll);
         }
         return true;
+    }
+
+    private List<String> getRunningPackages(List<ActivityManager.RunningTaskInfo> runningTasks) {
+        List<String> runningPackages = new ArrayList<>();
+        if (runningTasks.size() > 0) {
+            for (ActivityManager.RunningTaskInfo runningTask : runningTasks) {
+                runningPackages.add(runningTask.topActivity.getPackageName());
+            }
+        }
+        return runningPackages;
     }
 
     /**
