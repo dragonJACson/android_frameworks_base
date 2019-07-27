@@ -779,9 +779,12 @@ final class Notifier {
         mSuspendBlocker.release();
     }
 
-    private void showWiredCharging() {
+    private void showWiredChargingStarted(int batteryLevel) {
         playChargingVibration(false);
         playChargingStartedSound();
+        if (mStatusBarManagerInternal != null) {
+            mStatusBarManagerInternal.showChargingAnimation(batteryLevel);
+        }
         mSuspendBlocker.release();
     }
 
@@ -834,12 +837,7 @@ final class Notifier {
                     lockProfile(msg.arg1);
                     break;
                 case MSG_WIRED_CHARGING_STARTED:
-                    if (mStatusBarManagerInternal != null) {
-                        mStatusBarManagerInternal.showChargingAnimation(msg.arg1);
-                    }
-                    /* FALL THROUGH */
-                case MSG_WIRED_CHARGING_DISCONNECTED:
-                    showWiredCharging();
+                    showWiredChargingStarted(msg.arg1);
                     break;
             }
         }
