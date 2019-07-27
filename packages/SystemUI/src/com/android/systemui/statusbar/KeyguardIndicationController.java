@@ -318,7 +318,6 @@ public class KeyguardIndicationController {
                     mTextView.switchIndication(percentage);
                 }
                 mChargingIndicationView.setVisibility(View.GONE);
-                mChargingIndicationView.pauseAnimation();
                 return;
             }
 
@@ -366,7 +365,6 @@ public class KeyguardIndicationController {
             mChargingIndicationView.playAnimation();
         } else {
             mChargingIndicationView.setVisibility(View.GONE);
-            mChargingIndicationView.pauseAnimation();
         }
     }
 
