@@ -50,6 +50,7 @@ import android.os.RemoteCallback;
 import android.os.SystemProperties;
 import android.os.TransactionTooLargeException;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.ArrayMap;
 import android.util.ArraySet;
 
@@ -453,7 +454,10 @@ public final class ActiveServices {
                 if (mAm.mIAegisInterface.isChainLaunchDisabled(callingPackage, r.packageName)) {
                     return new ComponentName("?", "app is chain launch!");
                 } else if (mAm.mIAegisInterface.isAutomaticallyLaunchDisabled(r.packageName)) {
-                    return new ComponentName("?", "app is automatically launch!");
+                    final List<String> runningPackages = getRunningPackages(mAm.getTasks(3));
+                    if (!runningPackages.contains(r.packageName)) {
+                        return new ComponentName("?", "app is automatically launch!");
+                    }
                 }
             }
         } catch (RemoteException e) {
@@ -4258,6 +4262,23 @@ public final class ActiveServices {
             dumpService("", fd, pw, services.get(i), args, dumpAll);
         }
         return true;
+    }
+
+    private List<String> getRunningPackages(List<ActivityManager.RunningTaskInfo> runningTasks) {
+        List<String> runningPackages = new ArrayList<>();
+        if (runningTasks.size() > 0) {
+            final String currentHomeActivity = mAm.mStackSupervisor.getHomeActivity().packageName;
+            for (ActivityManager.RunningTaskInfo runningTask : runningTasks) {
+                final String key = runningTask.topActivity.getPackageName();
+                if (!TextUtils.equals(currentHomeActivity, key)) {
+                    runningPackages.add(key);
+                }
+            }
+            if (runningPackages.size() == 3) {
+                runningPackages.remove(runningPackages.size() - 1);
+            }
+        }
+        return runningPackages;
     }
 
     /**
